@@ -26,7 +26,7 @@ app.use(express.json())
 
 const Person = require('./models/person');
 
-app.get('/api/persons', (req, res) => {
+app.get('/api/persons', (req, res, next) => {
     Person.find({}).then(persons => {
         res.json(persons);
     }).catch(error => next(error));
@@ -43,7 +43,7 @@ app.get('/api/persons/:id', (req, res, next) => {
     }).catch(error => next(error));
 })
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
     const newPerson = req.body;
     if (!newPerson.name || !newPerson.number) {
         return res.status(400).json({ error: 'Name or number is missing' });
@@ -57,7 +57,7 @@ app.post('/api/persons', (req, res) => {
     }).catch(error => next(error));
 })
 
-app.delete('/api/persons/:id', (req, res) => {
+app.delete('/api/persons/:id', (req, res, next) => {
     const id = req.params.id;
     Person.findByIdAndDelete(id).then(result => {
         if (result) {
@@ -75,16 +75,18 @@ app.put('/api/persons/:id', (req, res, next) => {
         if (!person) {
             res.status(404).end();
         }
-        person.name = name;
-        person.number = number;
-
-        return person.save().then(result => {
-            res.json(result);
-        })
+        const personToBeUpdated = {
+            name: name, 
+            number: number,
+            id: id
+        };
+        Person.updateOne({}, personToBeUpdated, { runValidators: true }).then(result => {
+            res.json(personToBeUpdated);
+        }).catch(error => next(error));
     }).catch(error => next(error));
 })
 
-app.get('/info', (req, res) => {
+app.get('/info', (req, res, next) => {
     Person.find({}).then(persons => {
         res.send(`
             <p>Phonebook has info for ${persons.length} people</p>
@@ -105,9 +107,11 @@ const errorHandler = (error, request, response, next) => {
 
     if (error.name === 'CastError') {
         return response.status(400).send({ error: 'malformatted id' })
+    } else if (error.name === 'ValidationError') {
+        return response.status(400).json({ error: error.message })
     }
 
-    next(error)
+    next(error);
 }
 
 // this has to be the last loaded middleware, also all the routes should be registered before this!

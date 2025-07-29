@@ -46,7 +46,17 @@ const App = () => {
             setNotificationMessage('');
             setNotificationType('');
           }, 5000);
-        })
+        }).catch(error => {
+          if (error.response && error.response.data && error.response.data.error) {
+            setNotificationMessage(error.response.data.error);
+            setNotificationType('error');
+            setTimeout(() => {
+              setNotificationMessage('');
+              setNotificationType('');
+            }, 5000);
+          }
+        }
+        )
       } else {
         return;
       }
@@ -62,7 +72,17 @@ const App = () => {
           setNotificationMessage('');
           setNotificationType('');
         }, 5000);
-      })
+      }).catch(error => {
+        if (error.response && error.response.data && error.response.data.error) {
+          setNotificationMessage(error.response.data.error);
+          setNotificationType('error');
+          setTimeout(() => {
+            setNotificationMessage('');
+            setNotificationType('');
+          }, 5000);
+        }
+      }
+      )
     }
   }
 
